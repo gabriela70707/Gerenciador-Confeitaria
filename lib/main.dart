@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'TelaHomeAdmin.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,6 +25,27 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // variveis que observa o que o usuario escreve
+  TextEditingController user = TextEditingController();
+  TextEditingController password = TextEditingController();
+
+  String correctUser = 'admin';
+  String correctPassword = 'admin';
+  String mensage = "";
+
+  void login() {
+    if (user.text == correctUser && password.text == correctPassword) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => Telahomeadmin()),
+      );
+    } else {
+      setState(() {
+        mensage = "Credenciais incorretas. Tente novamente";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -68,10 +90,14 @@ class _LoginPageState extends State<LoginPage> {
 
                 child: Column(
                   children: [
-                    Text("Seja Bem-Vindo!"),
+                    Text(
+                      "Seja Bem-Vindo!",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     SizedBox(height: 30),
                     TextField(
                       //input
+                      controller: user,
                       maxLength:
                           30, // numero maximo de caracteres que o campo aceita
                       //controller: user, // qual variavel que armazena o valor digitado
@@ -84,8 +110,17 @@ class _LoginPageState extends State<LoginPage> {
                             color: const Color.fromARGB(255, 116, 2, 78),
                           ),
                         ),
-                        labelText:
-                            "Digite seu usuário", //placeholder com animação
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.password, color: Colors.pinkAccent),
+                            SizedBox(width: 8),
+                            Text(
+                              "Digite seu usuário",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -97,6 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                           30, // numero maximo de caracteres que o campo aceita
                       //controller: user, // qual variavel que armazena o valor digitado
                       obscureText: true,
+                      controller: password,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(
@@ -106,8 +142,20 @@ class _LoginPageState extends State<LoginPage> {
                             color: const Color.fromARGB(255, 155, 4, 122),
                           ),
                         ),
-                        labelText:
-                            "Digite sua senha", //placeholder com animação
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.account_circle,
+                              color: Colors.pinkAccent,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              "Digite a Senha",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -131,9 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                           ), // arredonda borda
                         ),
                         child: ElevatedButton(
-                          onPressed: () {
-                            // ação do botão
-                          },
+                          onPressed: login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 Colors.transparent, // fundo transparente
@@ -155,6 +201,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+                    SizedBox(
+                      height: 30,
+                    ), // Distancia entre o botao e a mensagem de erro
+                    Text("$mensage", style: TextStyle(color: Colors.redAccent)),
                   ],
                 ),
               ),
