@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
     if (user.text == correctUser && password.text == correctPassword) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => Telahomeadmin()),
+        MaterialPageRoute(builder: (context) => TelaHomeAdmin()),
       );
     } else {
       setState(() {
