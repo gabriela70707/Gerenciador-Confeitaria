@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'telaEncomenda.dart';
+import 'telaFiado.dart';
+import 'telaFinanceira.dart';
+import 'telaEstoque.dart';
 
 class TelaHomeAdmin extends StatefulWidget {
   const TelaHomeAdmin({super.key});
@@ -57,7 +61,9 @@ class _TelaHomeAdminState extends State<TelaHomeAdmin> {
                     ),
                     IconButton(
                       icon: Icon(Icons.exit_to_app, color: Colors.white),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
                     ),
                   ],
                 ),
@@ -71,20 +77,40 @@ class _TelaHomeAdminState extends State<TelaHomeAdmin> {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildSummaryCard(
-                            "Lucro do Mês",
-                            "R\$ 2.450",
-                            Icons.attach_money,
-                            Color(0xFFE91E63),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TelaFinanceira(),
+                                ),
+                              );
+                            },
+                            child: _buildSummaryCard(
+                              "Lucro do Mês",
+                              "R\$ 2.450",
+                              Icons.attach_money,
+                              Color(0xFFE91E63),
+                            ),
                           ),
                         ),
                         SizedBox(width: 12),
                         Expanded(
-                          child: _buildSummaryCard(
-                            "Encomendas",
-                            "12 pendentes",
-                            Icons.calendar_today,
-                            Color(0xFFFF9800),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TelaEncomendas(),
+                                ),
+                              );
+                            },
+                            child: _buildSummaryCard(
+                              "Encomendas",
+                              "12 pendentes",
+                              Icons.calendar_today,
+                              Color(0xFFFF9800),
+                            ),
                           ),
                         ),
                       ],
@@ -93,20 +119,40 @@ class _TelaHomeAdminState extends State<TelaHomeAdmin> {
                     Row(
                       children: [
                         Expanded(
-                          child: _buildSummaryCard(
-                            "Fiado",
-                            "R\$ 340",
-                            Icons.person_outline,
-                            Color(0xFFAB47BC),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TelaFiado(),
+                                ),
+                              );
+                            },
+                            child: _buildSummaryCard(
+                              "Fiado",
+                              "R\$ 340",
+                              Icons.person_outline,
+                              Color(0xFFAB47BC),
+                            ),
                           ),
                         ),
                         SizedBox(width: 12),
                         Expanded(
-                          child: _buildSummaryCard(
-                            "Estoque",
-                            "3 alertas",
-                            Icons.inventory_2_outlined,
-                            Color(0xFF42A5F5),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TelaEstoque(),
+                                ),
+                              );
+                            },
+                            child: _buildSummaryCard(
+                              "Estoque",
+                              "3 alertas",
+                              Icons.inventory_2_outlined,
+                              Color(0xFF42A5F5),
+                            ),
                           ),
                         ),
                       ],
@@ -146,16 +192,36 @@ class _TelaHomeAdminState extends State<TelaHomeAdmin> {
                         ],
                       ),
                       SizedBox(height: 16),
-                      _buildAlertItem(
-                        "2 encomendas para amanhã",
-                        "Urgente",
-                        Color(0xFFFF6F00),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TelaEncomendas(),
+                            ),
+                          );
+                        },
+                        child: _buildAlertItem(
+                          "2 encomendas para amanhã",
+                          "Urgente",
+                          Color(0xFFFF6F00),
+                        ),
                       ),
                       SizedBox(height: 8),
-                      _buildAlertItem(
-                        "Farinha acabando",
-                        "Estoque",
-                        Color(0xFFFDD835),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TelaEstoque(),
+                            ),
+                          );
+                        },
+                        child: _buildAlertItem(
+                          "Farinha acabando",
+                          "Estoque",
+                          Color(0xFFFDD835),
+                        ),
                       ),
                     ],
                   ),
@@ -177,32 +243,70 @@ class _TelaHomeAdminState extends State<TelaHomeAdmin> {
                       ),
                     ),
                     SizedBox(height: 12),
-                    _buildFunctionalityCard(
-                      "Agenda de Encomendas",
-                      "Gerencie pedidos futuros",
-                      Icons.calendar_month,
-                      Color(0xFFE91E63),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TelaEncomendas(),
+                          ),
+                        );
+                      },
+                      child: _buildFunctionalityCard(
+                        "Agenda de Encomendas",
+                        "Gerencie pedidos futuros",
+                        Icons.calendar_month,
+                        Color(0xFFE91E63),
+                      ),
                     ),
                     SizedBox(height: 12),
-                    _buildFunctionalityCard(
-                      "Controle de Fiado",
-                      "Clientes e saldos pendentes",
-                      Icons.people_outline,
-                      Color(0xFFAB47BC),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => TelaFiado()),
+                        );
+                      },
+                      child: _buildFunctionalityCard(
+                        "Controle de Fiado",
+                        "Clientes e saldos pendentes",
+                        Icons.people_outline,
+                        Color(0xFFAB47BC),
+                      ),
                     ),
                     SizedBox(height: 12),
-                    _buildFunctionalityCard(
-                      "Gestão Financeira",
-                      "Gastos, vendas e lucro",
-                      Icons.trending_up,
-                      Color(0xFF66BB6A),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TelaFinanceira(),
+                          ),
+                        );
+                      },
+                      child: _buildFunctionalityCard(
+                        "Gestão Financeira",
+                        "Gastos, vendas e lucro",
+                        Icons.trending_up,
+                        Color(0xFF66BB6A),
+                      ),
                     ),
                     SizedBox(height: 12),
-                    _buildFunctionalityCard(
-                      "Estoque de Insumos",
-                      "Controle de ingredientes",
-                      Icons.inventory_2,
-                      Color(0xFF42A5F5),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TelaEstoque(),
+                          ),
+                        );
+                      },
+                      child: _buildFunctionalityCard(
+                        "Estoque de Insumos",
+                        "Controle de ingredientes",
+                        Icons.inventory_2,
+                        Color(0xFF42A5F5),
+                      ),
                     ),
                   ],
                 ),

@@ -31,6 +31,9 @@ class _LoginPageState extends State<LoginPage> {
 
   String correctUser = 'admin';
   String correctPassword = 'admin';
+
+  String correctCliente = 'cliente';
+  String correctPasswordCliente = 'cliente';
   String mensage = "";
 
   void login() {
