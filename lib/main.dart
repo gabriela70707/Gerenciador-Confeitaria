@@ -57,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
         body: Center(
           child: Column(
             children: [
-              SizedBox(height: 120),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.05),
               Image.asset(
                 'assets/images/logo.png',
                 width: MediaQuery.of(context).size.width * 0.4,
@@ -116,8 +116,11 @@ class _LoginPageState extends State<LoginPage> {
                         label: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            Icon(Icons.password, color: Colors.pinkAccent),
-                            SizedBox(width: 8),
+                            Icon(
+                              Icons.account_circle,
+                              color: Colors.pinkAccent,
+                            ),
+                            SizedBox(width: 15),
                             Text(
                               "Digite seu usuário",
                               style: TextStyle(color: Colors.grey),
@@ -148,11 +151,8 @@ class _LoginPageState extends State<LoginPage> {
                         label: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            Icon(
-                              Icons.account_circle,
-                              color: Colors.pinkAccent,
-                            ),
-                            SizedBox(width: 8),
+                            Icon(Icons.password, color: Colors.pinkAccent),
+                            SizedBox(width: 15),
                             Text(
                               "Digite a Senha",
                               style: TextStyle(color: Colors.grey),
