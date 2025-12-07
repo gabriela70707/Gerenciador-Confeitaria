@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'TelaHomeAdmin.dart';
+import 'TelaHomeCliente.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,6 +42,12 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => TelaHomeAdmin()),
+      );
+    } else if (user.text == correctCliente &&
+        password.text == correctPasswordCliente) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TelaHomeCliente()),
       );
     } else {
       setState(() {
@@ -145,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                             10,
                           ), //arredondar a borda
                           borderSide: BorderSide(
-                            color: const Color.fromARGB(255, 155, 4, 122),
+                            color: const Color.fromARGB(255, 230, 71, 195),
                           ),
                         ),
                         label: Row(
@@ -171,8 +178,8 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color.fromARGB(255, 109, 163, 235),
-                              const Color.fromARGB(255, 245, 133, 207),
+                              Color.fromARGB(255, 194, 17, 146),
+                              Color.fromARGB(255, 235, 144, 238),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
