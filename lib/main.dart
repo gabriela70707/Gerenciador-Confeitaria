@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'TelaHomeAdmin.dart';
 import 'TelaHomeCliente.dart';
+import 'utils/init_database.dart'; // ← IMPORTAR O ARQUIVO
 
-void main() {
+void main() async {
+  // Garante que o Flutter esteja inicializado
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // PASSO 1: Inicializa o Firebase com as opções da plataforma
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // PASSO 2: Popula o banco com dados iniciais (apenas primeira vez)
+  // Comentado temporariamente para testar a interface
+  // await InitDatabase.popularDadosIniciais();
+  
+  // PASSO 3: Inicia o app normalmente
   runApp(const MyApp());
 }
 
@@ -13,7 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginPage(), // chama a pagina de login
+      home: LoginPage(),
     );
   }
 }
@@ -26,7 +42,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // variveis que observa o que o usuario escreve
   TextEditingController user = TextEditingController();
   TextEditingController password = TextEditingController();
 
@@ -69,35 +84,23 @@ class _LoginPageState extends State<LoginPage> {
                 'assets/images/logo.png',
                 width: MediaQuery.of(context).size.width * 0.4,
               ),
-
               SizedBox(height: 40),
-
               Container(
                 width: MediaQuery.of(context).size.width * 0.85,
                 padding: EdgeInsets.all(30),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(
-                    255,
-                    255,
-                    255,
-                    255,
-                  ), // cor de fundo
-                  borderRadius: BorderRadius.circular(20), // borda arredondada
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color.fromARGB(
-                        255,
-                        163,
-                        163,
-                        163,
-                      ).withOpacity(0.3), // cor da sombra
-                      spreadRadius: 0.2, // quanto a sombra se espalha
-                      blurRadius: 20, // intensidade do desfoque
-                      offset: Offset(4, 4), // posição da sombra (x, y)
+                      color: const Color.fromARGB(255, 163, 163, 163)
+                          .withOpacity(0.3),
+                      spreadRadius: 0.2,
+                      blurRadius: 20,
+                      offset: Offset(4, 4),
                     ),
                   ],
                 ),
-
                 child: Column(
                   children: [
                     Text(
@@ -106,16 +109,11 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     SizedBox(height: 30),
                     TextField(
-                      //input
                       controller: user,
-                      maxLength:
-                          30, // numero maximo de caracteres que o campo aceita
-                      //controller: user, // qual variavel que armazena o valor digitado
+                      maxLength: 30,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            10,
-                          ), //arredondar a borda
+                          borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
                             color: const Color.fromARGB(255, 116, 2, 78),
                           ),
@@ -136,21 +134,14 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     SizedBox(height: 30),
-
                     TextField(
-                      //input
-                      maxLength:
-                          30, // numero maximo de caracteres que o campo aceita
-                      //controller: user, // qual variavel que armazena o valor digitado
+                      maxLength: 30,
                       obscureText: true,
                       controller: password,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            10,
-                          ), //arredondar a borda
+                          borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
                             color: const Color.fromARGB(255, 230, 71, 195),
                           ),
@@ -168,9 +159,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     SizedBox(height: 40),
-
                     SizedBox(
                       width: MediaQuery.of(context).size.width * 0.7,
                       height: MediaQuery.of(context).size.height * 0.05,
@@ -184,21 +173,15 @@ class _LoginPageState extends State<LoginPage> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(
-                            10,
-                          ), // arredonda borda
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: ElevatedButton(
                           onPressed: login,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.transparent, // fundo transparente
-                            shadowColor:
-                                Colors.transparent, // remove sombra padrão
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                10,
-                              ), // acompanha o container
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           child: Text(
@@ -211,9 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    SizedBox(
-                      height: 30,
-                    ), // Distancia entre o botao e a mensagem de erro
+                    SizedBox(height: 30),
                     Text("$mensage", style: TextStyle(color: Colors.redAccent)),
                   ],
                 ),

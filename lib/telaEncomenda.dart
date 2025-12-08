@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'models/encomenda_model.dart';
+import 'services/firebase_service.dart';
 
 class TelaEncomendas extends StatefulWidget {
   const TelaEncomendas({super.key});
@@ -9,6 +12,7 @@ class TelaEncomendas extends StatefulWidget {
 
 class _TelaEncomendasState extends State<TelaEncomendas> {
   String selectedTab = "Pendentes";
+  final FirebaseService _firebaseService = FirebaseService();
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +56,18 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
                               ),
                             ),
                             SizedBox(height: 4),
-                            Text(
-                              "4 pedidos pendentes",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
-                              ),
+                            StreamBuilder<QuerySnapshot>(
+                              stream: _firebaseService.buscarEncomendarPorStatus('pendente'),
+                              builder: (context, snapshot) {
+                                int count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                                return Text(
+                                  "$count pedidos pendentes",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 14,
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -79,44 +89,73 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
               ),
             ),
 
-            // Lista de encomendas
+            // Lista de encomendas com StreamBuilder
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildEncomendaCard(
-                    "Bolo de Chocolate",
-                    "Maria Silva",
-                    "(11) 98765-4321",
-                    "17/11/2025",
-                    "14:00",
-                    "R\$ 45.00",
-                  ),
-                  SizedBox(height: 12),
-                  _buildEncomendaCard(
-                    "Torta de Morango",
-                    "João Santos",
-                    "(11) 91234-5678",
-                    "17/11/2025",
-                    "16:00",
-                    "R\$ 55.00",
-                  ),
-                  SizedBox(height: 12),
-                  _buildEncomendaCard(
-                    "Cupcakes (24un)",
-                    "Ana Costa",
-                    "(11) 99876-5432",
-                    "18/11/2025",
-                    "10:00",
-                    "R\$ 192.00",
-                  ),
-                ],
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _getStreamPorTab(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Erro ao carregar encomendas: ${snapshot.error}'),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inbox, size: 80, color: Colors.grey[400]),
+                          SizedBox(height: 16),
+                          Text(
+                            'Nenhuma encomenda encontrada',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final encomendas = snapshot.data!.docs.map((doc) {
+                    return EncomendaModel.fromFirestore(doc);
+                  }).toList();
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: encomendas.length,
+                    itemBuilder: (context, index) {
+                      return Column(
+                        children: [
+                          _buildEncomendaCard(encomendas[index]),
+                          SizedBox(height: 12),
+                        ],
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Stream<QuerySnapshot> _getStreamPorTab() {
+    if (selectedTab == "Pendentes") {
+      return _firebaseService.buscarEncomendarPorStatus('pendente');
+    } else if (selectedTab == "Concluídas") {
+      return _firebaseService.buscarEncomendarPorStatus('concluido');
+    } else {
+      return _firebaseService.buscarEncomendas();
+    }
   }
 
   Widget _buildTab(String title) {
@@ -141,14 +180,9 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
     );
   }
 
-  Widget _buildEncomendaCard(
-    String produto,
-    String cliente,
-    String telefone,
-    String data,
-    String hora,
-    String valor,
-  ) {
+  Widget _buildEncomendaCard(EncomendaModel encomenda) {
+    bool isConcluida = encomenda.status == 'concluido';
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -170,7 +204,7 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
             children: [
               Expanded(
                 child: Text(
-                  produto,
+                  encomenda.produto,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -184,16 +218,20 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFF9800),
+                  color: isConcluida ? Color(0xFF4CAF50) : Color(0xFFFF9800),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.schedule, color: Colors.white, size: 14),
+                    Icon(
+                      isConcluida ? Icons.check_circle : Icons.schedule,
+                      color: Colors.white,
+                      size: 14,
+                    ),
                     SizedBox(width: 4),
                     Text(
-                      "Pendente",
+                      isConcluida ? "Concluída" : "Pendente",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -211,7 +249,7 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
               Icon(Icons.person_outline, size: 18, color: Color(0xFFE91E63)),
               SizedBox(width: 8),
               Text(
-                cliente,
+                encomenda.cliente,
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
@@ -222,11 +260,27 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
               Icon(Icons.phone_outlined, size: 18, color: Color(0xFFE91E63)),
               SizedBox(width: 8),
               Text(
-                telefone,
+                encomenda.telefone,
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
           ),
+          if (encomenda.observacoes != null && encomenda.observacoes!.isNotEmpty) ...[
+            SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.note_outlined, size: 18, color: Color(0xFFE91E63)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    encomenda.observacoes!,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
+                ),
+              ],
+            ),
+          ],
           SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
@@ -239,14 +293,14 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
                 Icon(Icons.calendar_today, size: 16, color: Color(0xFFE91E63)),
                 SizedBox(width: 8),
                 Text(
-                  data,
+                  encomenda.dataRetirada,
                   style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                 ),
                 SizedBox(width: 20),
                 Icon(Icons.access_time, size: 16, color: Color(0xFFE91E63)),
                 SizedBox(width: 8),
                 Text(
-                  hora,
+                  encomenda.horaRetirada,
                   style: TextStyle(fontSize: 14, color: Colors.grey[800]),
                 ),
               ],
@@ -257,35 +311,110 @@ class _TelaEncomendasState extends State<TelaEncomendas> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Valor: $valor",
+                "Valor: R\$ ${encomenda.valor.toStringAsFixed(2)}",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey[800],
                 ),
               ),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF4CAF50),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              Row(
+                children: [
+                  if (!isConcluida)
+                    ElevatedButton(
+                      onPressed: () async {
+                        await _concluirEncomenda(encomenda.id!);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF4CAF50),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                      ),
+                      child: Text(
+                        "Concluir",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () {
+                      _confirmarDelecao(encomenda.id!);
+                    },
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                ),
-                child: Text(
-                  "Marcar como Concluído",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                ],
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _concluirEncomenda(String id) async {
+    try {
+      await _firebaseService.concluirEncomenda(id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Encomenda concluída com sucesso!"),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erro ao concluir encomenda: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _confirmarDelecao(String id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Confirmar Exclusão"),
+        content: Text("Deseja realmente excluir esta encomenda?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deletarEncomenda(id);
+            },
+            child: Text("Excluir", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletarEncomenda(String id) async {
+    try {
+      await _firebaseService.deletarEncomenda(id);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Encomenda excluída com sucesso!"),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erro ao excluir encomenda: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

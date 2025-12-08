@@ -1,0 +1,28 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "delicias-em-camadas",
+          "appId": "1:1056668448570:android:e95b9f0ab5e386b0244203",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "delicias-em-camadas",
+          "configurations": {
+            "android": "1:1056668448570:android:e95b9f0ab5e386b0244203",
+            "web": "1:1056668448570:web:fd65e91da5fa8c22244203"
+          }
+        }
+      }
+    }
+  }
+}

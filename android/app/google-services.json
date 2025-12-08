@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1056668448570",
+    "project_id": "delicias-em-camadas",
+    "storage_bucket": "delicias-em-camadas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1056668448570:android:e95b9f0ab5e386b0244203",
+        "android_client_info": {
+          "package_name": "com.gerenciador.gerenciador_confeitaria"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4wr66a6EslzdXJ4GPRJjPECuCLWRNKQI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'models/encomenda_model.dart';
+import 'models/produto_model.dart';
+import 'services/firebase_service.dart';
 
 class TelaHomeCliente extends StatefulWidget {
   const TelaHomeCliente({super.key});
@@ -8,33 +12,7 @@ class TelaHomeCliente extends StatefulWidget {
 }
 
 class _TelaHomeClienteState extends State<TelaHomeCliente> {
-  // Lista de produtos
-  final List<Map<String, dynamic>> produtos = [
-    {
-      'nome': 'Bolo de Chocolate',
-      'descricao': 'Massa úmida com cobertura cremosa',
-      'preco': 45.00,
-      'avaliacao': 4.8,
-    },
-    {
-      'nome': 'Brigadeiro Gourmet',
-      'descricao': 'Receita especial da casa',
-      'preco': 2.50,
-      'avaliacao': 5.0,
-    },
-    {
-      'nome': 'Torta de Morango',
-      'descricao': 'Morangos frescos e chantilly',
-      'preco': 55.00,
-      'avaliacao': 4.9,
-    },
-    {
-      'nome': 'Cupcake Decorado',
-      'descricao': 'Vários sabores disponíveis',
-      'preco': 8.00,
-      'avaliacao': 4.7,
-    },
-  ];
+  final FirebaseService _firebaseService = FirebaseService();
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +26,10 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color.fromARGB(255, 194, 17, 146), Color.fromARGB(255, 235, 144, 238)],
+                  colors: [
+                    Color.fromARGB(255, 194, 17, 146),
+                    Color.fromARGB(255, 235, 144, 238)
+                  ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -127,41 +108,70 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                       color: Colors.grey[800],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 239, 36, 202),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "${produtos.length} itens",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _firebaseService.buscarProdutos(),
+                    builder: (context, snapshot) {
+                      int count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(255, 239, 36, 202),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          "$count itens",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
 
-            // Grid de produtos
+            // Grid de produtos com StreamBuilder
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.75,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: produtos.length,
-                itemBuilder: (context, index) {
-                  return _buildProdutoCard(produtos[index]);
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firebaseService.buscarProdutos(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Erro ao carregar produtos'));
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text('Nenhum produto disponível'),
+                    );
+                  }
+
+                  final produtos = snapshot.data!.docs.map((doc) {
+                    return ProdutoModel.fromFirestore(doc);
+                  }).toList();
+
+                  return GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: produtos.length,
+                    itemBuilder: (context, index) {
+                      return _buildProdutoCard(produtos[index]);
+                    },
+                  );
                 },
               ),
             ),
@@ -175,14 +185,17 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color.fromARGB(255, 194, 17, 146), Color.fromARGB(255, 235, 144, 238)],
+                      colors: [
+                        Color.fromARGB(255, 194, 17, 146),
+                        Color.fromARGB(255, 235, 144, 238)
+                      ],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color:  Color.fromARGB(255, 239, 36, 202).withOpacity(0.3),
+                        color: Color.fromARGB(255, 239, 36, 202).withOpacity(0.3),
                         blurRadius: 15,
                         offset: Offset(0, 5),
                       ),
@@ -221,133 +234,143 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
     );
   }
 
-  Widget _buildProdutoCard(Map<String, dynamic> produto) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagem placeholder
-          Container(
-            height: 120,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFFFCE4EC),
-                  Color(0xFFFFF3E0),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+  Widget _buildProdutoCard(ProdutoModel produto) {
+    return GestureDetector(
+      onTap: () {
+        _mostrarFormularioEncomenda(context, produtoSelecionado: produto);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Imagem placeholder
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFFCE4EC),
+                    Color(0xFFFFF3E0),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
               ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+              child: Center(
+                child: Icon(
+                  Icons.cake,
+                  size: 48,
+                  color: Color(0xFFE91E63).withOpacity(0.3),
+                ),
               ),
             ),
-            child: Center(
-              child: Icon(
-                Icons.shopping_bag,
-                size: 48,
-                color: Color(0xFFE91E63).withOpacity(0.3),
-              ),
-            ),
-          ),
-          // Informações do produto
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.favorite, color: Colors.grey[300], size: 18),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text(
-                  produto['nome'],
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+            // Informações do produto
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.favorite, color: Colors.grey[300], size: 18),
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4),
-                Text(
-                  produto['descricao'],
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                  SizedBox(height: 8),
+                  Text(
+                    produto.nome,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.star, color: Color(0xFFFF9800), size: 16),
-                    SizedBox(width: 4),
-                    Text(
-                      "${produto['avaliacao']}",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
-                      ),
+                  SizedBox(height: 4),
+                  Text(
+                    produto.descricao,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
                     ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "R\$ ${produto['preco'].toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFE91E63),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color:  Color.fromARGB(255, 239, 36, 202),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "Pedir",
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.star, color: Color(0xFFFF9800), size: 16),
+                      SizedBox(width: 4),
+                      Text(
+                        "${produto.avaliacao}",
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "R\$ ${produto.preco.toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE91E63),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Color.fromARGB(255, 239, 36, 202),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          "Pedir",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  void _mostrarFormularioEncomenda(BuildContext context) {
-    String? produtoSelecionado;
+  void _mostrarFormularioEncomenda(BuildContext context, {ProdutoModel? produtoSelecionado}) {
+    String? produtoId = produtoSelecionado?.id;
+    String? produtoNome = produtoSelecionado?.nome;
+    double? produtoPreco = produtoSelecionado?.preco;
+    
+    TextEditingController nomeController = TextEditingController();
+    TextEditingController telefoneController = TextEditingController();
     TextEditingController dataController = TextEditingController();
     TextEditingController horaController = TextEditingController();
     TextEditingController observacoesController = TextEditingController();
@@ -360,7 +383,7 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             return Container(
-              height: MediaQuery.of(context).size.height * 0.75,
+              height: MediaQuery.of(context).size.height * 0.85,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -413,6 +436,70 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Nome do Cliente
+                            Text(
+                              "Seu Nome",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFE91E63),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            TextField(
+                              controller: nomeController,
+                              decoration: InputDecoration(
+                                hintText: "Digite seu nome completo",
+                                prefixIcon: Icon(
+                                  Icons.person,
+                                  color: Color(0xFFE91E63),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Color(0xFFE91E63),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            
+                            // Telefone
+                            Text(
+                              "Telefone",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFE91E63),
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            TextField(
+                              controller: telefoneController,
+                              keyboardType: TextInputType.phone,
+                              decoration: InputDecoration(
+                                hintText: "(00) 00000-0000",
+                                prefixIcon: Icon(
+                                  Icons.phone,
+                                  color: Color(0xFFE91E63),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Color(0xFFE91E63),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            
+                            // Produto
                             Text(
                               "Produto",
                               style: TextStyle(
@@ -422,34 +509,52 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                               ),
                             ),
                             SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[300]!),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  hint: Text("Selecione o produto"),
-                                  value: produtoSelecionado,
-                                  items: produtos.map((produto) {
-                                    return DropdownMenuItem<String>(
-                                      value: produto['nome'],
-                                      child: Text(produto['nome']),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setModalState(() {
-                                      produtoSelecionado = newValue;
-                                    });
-                                  },
-                                ),
-                              ),
+                            StreamBuilder<QuerySnapshot>(
+                              stream: _firebaseService.buscarProdutos(),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData) {
+                                  return CircularProgressIndicator();
+                                }
+                                
+                                final produtos = snapshot.data!.docs.map((doc) {
+                                  return ProdutoModel.fromFirestore(doc);
+                                }).toList();
+
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey[300]!),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      isExpanded: true,
+                                      hint: Text("Selecione o produto"),
+                                      value: produtoNome,
+                                      items: produtos.map((produto) {
+                                        return DropdownMenuItem<String>(
+                                          value: produto.nome,
+                                          child: Text("${produto.nome} - R\$ ${produto.preco.toStringAsFixed(2)}"),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        setModalState(() {
+                                          produtoNome = newValue;
+                                          final produtoSel = produtos.firstWhere(
+                                            (p) => p.nome == newValue,
+                                          );
+                                          produtoId = produtoSel.id;
+                                          produtoPreco = produtoSel.preco;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                             SizedBox(height: 20),
+                            
+                            // Data
                             Text(
                               "Data da Retirada",
                               style: TextStyle(
@@ -477,8 +582,23 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                                   ),
                                 ),
                               ),
+                              onTap: () async {
+                                FocusScope.of(context).requestFocus(FocusNode());
+                                DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime(2030),
+                                );
+                                if (picked != null) {
+                                  dataController.text =
+                                      "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+                                }
+                              },
                             ),
                             SizedBox(height: 20),
+                            
+                            // Hora
                             Text(
                               "Horário da Retirada",
                               style: TextStyle(
@@ -506,8 +626,21 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                                   ),
                                 ),
                               ),
+                              onTap: () async {
+                                FocusScope.of(context).requestFocus(FocusNode());
+                                TimeOfDay? picked = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.now(),
+                                );
+                                if (picked != null) {
+                                  horaController.text =
+                                      "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+                                }
+                              },
                             ),
                             SizedBox(height: 20),
+                            
+                            // Observações
                             Text(
                               "Observações",
                               style: TextStyle(
@@ -521,8 +654,7 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                               controller: observacoesController,
                               maxLines: 4,
                               decoration: InputDecoration(
-                                hintText:
-                                    "Ex: decoração especial, mensagem personalizada...",
+                                hintText: "Ex: decoração especial, mensagem personalizada...",
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.only(bottom: 60),
                                   child: Icon(
@@ -562,17 +694,90 @@ class _TelaHomeClienteState extends State<TelaHomeCliente> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: ElevatedButton(
-                            onPressed: () {
-                              // Aqui você implementaria a lógica para salvar a encomenda
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    "Encomenda realizada com sucesso!",
+                            onPressed: () async {
+                              // Validações
+                              if (nomeController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Por favor, digite seu nome"),
+                                    backgroundColor: Colors.red,
                                   ),
-                                  backgroundColor: Color(0xFF4CAF50),
-                                ),
-                              );
+                                );
+                                return;
+                              }
+                              
+                              if (telefoneController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Por favor, digite seu telefone"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (produtoNome == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Por favor, selecione um produto"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (dataController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Por favor, selecione a data"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (horaController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Por favor, selecione o horário"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              // Criar encomenda
+                              try {
+                                EncomendaModel novaEncomenda = EncomendaModel(
+                                  produto: produtoNome!,
+                                  cliente: nomeController.text,
+                                  telefone: telefoneController.text,
+                                  dataRetirada: dataController.text,
+                                  horaRetirada: horaController.text,
+                                  observacoes: observacoesController.text.isNotEmpty 
+                                      ? observacoesController.text 
+                                      : null,
+                                  valor: produtoPreco ?? 0,
+                                  status: 'pendente',
+                                );
+
+                                await _firebaseService.criarEncomenda(novaEncomenda.toMap());
+
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Encomenda realizada com sucesso!"),
+                                    backgroundColor: Color(0xFF4CAF50),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Erro ao criar encomenda: $e"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,

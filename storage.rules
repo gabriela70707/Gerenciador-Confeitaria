@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Função para verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Função para validar tipo de imagem
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Função para validar tamanho do arquivo (max 5MB)
+    function isValidSize() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+    
+    // Regras para imagens de produtos
+    match /produtos/{produtoId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isImage() && isValidSize();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Regras para imagens de encomendas
+    match /encomendas/{encomendaId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && isImage() && isValidSize();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Regras para fotos de perfil
+    match /perfil/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && 
+                     request.auth.uid == userId && 
+                     isImage() && 
+                     isValidSize();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Bloquear acesso a qualquer outro caminho não especificado
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

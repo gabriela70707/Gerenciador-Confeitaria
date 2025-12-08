@@ -1,0 +1,62 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Função para verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Função para verificar se o usuário é admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Regras para a coleção de usuários
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+    
+    // Regras para produtos
+    match /produtos/{produtoId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Regras para insumos (estoque)
+    match /insumos/{insumoId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Regras para encomendas
+    match /encomendas/{encomendaId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin() || 
+                              (isAuthenticated() && resource.data.clienteId == request.auth.uid);
+    }
+    
+    // Regras para fiados
+    match /fiados/{fiadoId} {
+      allow read: if isAuthenticated() && 
+                    (isAdmin() || resource.data.clienteId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    
+    // Regras para transações financeiras
+    match /transacoes/{transacaoId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Bloquear acesso a qualquer outra coleção não especificada
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
