@@ -3,6 +3,20 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // ⚠️ ATENÇÃO: Regras temporárias para DESENVOLVIMENTO
+    // Permite leitura e escrita SEM autenticação
+    // IMPORTANTE: Antes de colocar em produção, configure autenticação adequada!
+    
+    // Permitir acesso total temporariamente para teste
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // ===================================================
+    // DESCOMENTE AS REGRAS ABAIXO QUANDO IMPLEMENTAR AUTENTICAÇÃO:
+    // ===================================================
+    
+    /*
     // Função para verificar se o usuário está autenticado
     function isAuthenticated() {
       return request.auth != null;
@@ -53,10 +67,6 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
-    
-    // Bloquear acesso a qualquer outra coleção não especificada
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    */
   }
 }

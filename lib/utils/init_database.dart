@@ -7,24 +7,28 @@ class InitDatabase {
   /// Método estático que popula o banco com dados iniciais
   /// É chamado apenas UMA VEZ quando o app inicia
   static Future<void> popularDadosIniciais() async {
-    // Referência ao Firestore (banco de dados)
-    final firestore = FirebaseFirestore.instance;
-    
-    // ==================== VERIFICAÇÃO ====================
-    // Primeiro, verifica se já existem produtos no banco
-    // Isso evita duplicar dados toda vez que o app abre
-    final produtos = await firestore.collection('produtos').get();
-    
-    if (produtos.docs.isNotEmpty) {
-      // Se já tem produtos, NÃO faz nada
-      print('✅ Banco já contém dados. Pulando inicialização.');
-      return; // Sai da função
-    }
-    
-    print('🔄 Populando banco de dados com dados iniciais...');
-    
-    // ==================== PRODUTOS ====================
-    // Se chegou aqui, o banco está vazio. Vamos popular!
+    try {
+      print('🔄 Iniciando verificação do banco de dados...');
+      
+      // Referência ao Firestore (banco de dados)
+      final firestore = FirebaseFirestore.instance;
+      
+      // ==================== VERIFICAÇÃO ====================
+      // Primeiro, verifica se já existem produtos no banco
+      // Isso evita duplicar dados toda vez que o app abre
+      print('🔍 Verificando se já existem produtos...');
+      final produtos = await firestore.collection('produtos').get();
+      
+      if (produtos.docs.isNotEmpty) {
+        // Se já tem produtos, NÃO faz nada
+        print('✅ Banco já contém ${produtos.docs.length} produtos. Pulando inicialização.');
+        return; // Sai da função
+      }
+      
+      print('🔄 Banco vazio! Populando com dados iniciais...');
+      
+      // ==================== PRODUTOS ====================
+      // Se chegou aqui, o banco está vazio. Vamos popular!
     
     // Produto 1: Bolo de Chocolate
     await firestore.collection('produtos').add({
@@ -175,10 +179,16 @@ class InitDatabase {
     });
     
     // Mensagem de sucesso
-    print('Banco de dados populado com sucesso!');
-    print('4 produtos adicionados');
-    print('4 insumos adicionados');
-    print('2 clientes com fiado adicionados');
-    print('4 transações adicionadas');
+    print('✅ Banco de dados populado com sucesso!');
+    print('✅ 4 produtos adicionados');
+    print('✅ 4 insumos adicionados');
+    print('✅ 2 clientes com fiado adicionados');
+    print('✅ 4 transações adicionadas');
+    
+    } catch (e, stackTrace) {
+      print('❌ ERRO ao popular banco de dados: $e');
+      print('Stack trace: $stackTrace');
+      rethrow;
+    }
   }
 }

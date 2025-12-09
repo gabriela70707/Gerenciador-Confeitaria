@@ -3,23 +3,36 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'TelaHomeAdmin.dart';
 import 'TelaHomeCliente.dart';
-import 'utils/init_database.dart'; // ← IMPORTAR O ARQUIVO
+import 'utils/init_database.dart';
 
 void main() async {
   // Garante que o Flutter esteja inicializado
   WidgetsFlutterBinding.ensureInitialized();
   
-  // PASSO 1: Inicializa o Firebase com as opções da plataforma
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  print('🚀 Iniciando app...');
   
-  // PASSO 2: Popula o banco com dados iniciais (apenas primeira vez)
-  // Comentado temporariamente para testar a interface
-  // await InitDatabase.popularDadosIniciais();
+  try {
+    // PASSO 1: Inicializa o Firebase com as opções da plataforma
+    print('🔄 Inicializando Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase inicializado com sucesso');
+    
+  } catch (e, stackTrace) {
+    print('❌ ERRO ao inicializar Firebase: $e');
+    print('Stack: $stackTrace');
+  }
   
-  // PASSO 3: Inicia o app normalmente
+  print('🎨 Iniciando interface...');
+  // PASSO 2: Inicia o app imediatamente
   runApp(const MyApp());
+  print('✅ App iniciado');
+  
+  // PASSO 3: Popular dados em background
+  InitDatabase.popularDadosIniciais().catchError((e) {
+    print('❌ Erro ao popular dados: $e');
+  });
 }
 
 class MyApp extends StatelessWidget {

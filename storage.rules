@@ -3,6 +3,20 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
+    // ⚠️ ATENÇÃO: Regras temporárias para DESENVOLVIMENTO
+    // Permite leitura e escrita SEM autenticação
+    // IMPORTANTE: Antes de colocar em produção, configure autenticação adequada!
+    
+    // Permitir acesso total temporariamente para teste
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+    
+    // ===================================================
+    // DESCOMENTE AS REGRAS ABAIXO QUANDO IMPLEMENTAR AUTENTICAÇÃO:
+    // ===================================================
+    
+    /*
     // Função para verificar se o usuário está autenticado
     function isAuthenticated() {
       return request.auth != null;
@@ -41,10 +55,6 @@ service firebase.storage {
                      isValidSize();
       allow delete: if isAuthenticated() && request.auth.uid == userId;
     }
-    
-    // Bloquear acesso a qualquer outro caminho não especificado
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
+    */
   }
 }
